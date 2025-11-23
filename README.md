@@ -1,50 +1,79 @@
-# Welcome to your Expo app 👋
+# Notes App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A feature-rich, local-first Notes Application built with Expo and React Native. This application allows users to securely create, manage, and organize their notes with support for images, search, and sorting.
 
-## Get started
+## Features
 
-1. Install dependencies
+-   **Secure Local Authentication**: User accounts are created and authenticated locally on the device.
+-   **Rich Note Management**: Create, edit, and delete notes with titles, bodies, and image attachments.
+-   **Advanced Organization**:
+    -   **Search**: Filter notes instantly by title or content.
+    -   **Sort**: Organize notes by "Last Updated" or "Title" (A-Z/Z-A).
+-   **Persistent Storage**: All data is stored locally on the device, ensuring privacy and offline access.
+-   **Modern UI**: Built with a clean, responsive design using standard React Native components.
 
-   ```bash
-   npm install
-   ```
+## Architecture
 
-2. Start the app
+The application follows a component-based architecture powered by React Context for state management and AsyncStorage for persistence.
 
-   ```bash
-   npx expo start
-   ```
+```mermaid
+graph TD
+    subgraph UI_Layer [UI Layer]
+        Home[Home Screen]
+        NoteDetail[Note Detail Screen]
+        AuthScreens[Sign In / Sign Up]
+        Modal[Sort Modal]
+    end
 
-In the output, you'll find options to open the app in a
+    subgraph Context_Layer [Context Layer]
+        AuthContext[AuthContext]
+        NotesContext[NotesContext]
+    end
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+    subgraph Data_Layer [Data Layer]
+        AsyncStorage[(AsyncStorage)]
+    end
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+    Home --> NotesContext
+    Home --> AuthContext
+    NoteDetail --> NotesContext
+    AuthScreens --> AuthContext
+    Modal --> Home
 
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+    NotesContext --> AsyncStorage
+    AuthContext --> AsyncStorage
+    AuthContext --> Crypto[Expo Crypto]
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Authentication
 
-## Learn more
+Authentication is handled entirely locally on the device, prioritizing user privacy and data ownership.
 
-To learn more about developing your project with Expo, look at the following resources:
+-   **Mechanism**: The app uses a username/password-based system.
+-   **Security**: Passwords are **never** stored in plain text.
+    -   When a user signs up, their password is hashed using **SHA-256** via `expo-crypto`.
+    -   The hash is stored in `AsyncStorage` with the key `user:{username}`.
+-   **Session Management**:
+    -   Upon successful login, a session token (username) is stored in `AsyncStorage`.
+    -   The app checks for this session on launch to automatically log the user in.
+-   **Data Isolation**: Notes are associated with the logged-in user's ID, ensuring that users only see their own data.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Setup Instructions
 
-## Join the community
+1.  **Install Dependencies**
+    ```bash
+    pnpm install
+    ```
 
-Join our community of developers creating universal apps.
+2.  **Start the Application**
+    ```bash
+    pnpm start
+    ```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Libraries Used
+
+-   **Core**: `expo`, `react`, `react-native`, `expo-router`
+-   **Storage**: `@react-native-async-storage/async-storage`, `expo-secure-store`
+-   **Utilities**: `expo-crypto`, `react-native-uuid`, `expo-file-system`
+-   **UI/Media**: `@expo/vector-icons`, `expo-image-picker`, `expo-image`
+-   **Navigation**: `@react-navigation/native`, `@react-navigation/bottom-tabs`
