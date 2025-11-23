@@ -1,3 +1,4 @@
+import { CATEGORY_COLORS, CATEGORY_TEXT_COLORS } from '@/components/CategoryBadge';
 import { useNotes } from '@/context/NotesContext';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -17,6 +18,8 @@ export default function NoteDetailScreen() {
   const [title, setTitle] = useState(existingNote?.title || '');
   const [body, setBody] = useState(existingNote?.body || '');
   const [imageUri, setImageUri] = useState(existingNote?.imageUri);
+  const [category, setCategory] = useState(existingNote?.category || 'Personal');
+  const [isPinned, setIsPinned] = useState(existingNote?.isPinned || false);
 
   useEffect(() => {
     if (!isNew && !existingNote) {
@@ -33,9 +36,9 @@ export default function NoteDetailScreen() {
 
     try {
       if (isNew) {
-        await addNote(title, body, imageUri);
+        await addNote(title, body, imageUri, category);
       } else {
-        await updateNote(id!, title, body, imageUri);
+        await updateNote(id!, title, body, imageUri, category, isPinned);
       }
       router.back();
     } catch (error) {
@@ -86,9 +89,18 @@ export default function NoteDetailScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={handleSave}>
-          <Text style={styles.saveButton}>Save</Text>
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity onPress={() => setIsPinned(!isPinned)} style={styles.pinButton}>
+            <Ionicons 
+              name={isPinned ? "pin" : "pin-outline"} 
+              size={24} 
+              color={isPinned ? "#FBC02D" : "#333"} 
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleSave}>
+            <Text style={styles.saveButton}>Save</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -100,6 +112,29 @@ export default function NoteDetailScreen() {
           onChangeText={setTitle}
           maxLength={100}
         />
+
+        <View style={styles.categoriesContainer}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {Object.keys(CATEGORY_COLORS).map((cat) => (
+              <TouchableOpacity
+                key={cat}
+                style={[
+                  styles.categoryChip,
+                  category === cat && styles.categoryChipSelected,
+                  { backgroundColor: category === cat ? CATEGORY_COLORS[cat] : '#f0f0f0' }
+                ]}
+                onPress={() => setCategory(cat)}
+              >
+                <Text style={[
+                  styles.categoryText,
+                  { color: category === cat ? CATEGORY_TEXT_COLORS[cat] : '#666' }
+                ]}>
+                  {cat}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
 
         <TouchableOpacity onPress={pickImage} style={styles.imageButton}>
           <Ionicons name="image-outline" size={24} color="#F57C00" />
@@ -153,9 +188,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
   backButton: {
     padding: 8,
     marginLeft: -8,
+  },
+  pinButton: {
+    padding: 4,
   },
   content: {
     flex: 1,
@@ -165,16 +208,39 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: '#007AFF', // Blue accent
     fontWeight: '700',
+    fontFamily: 'Poppins_700Bold',
   },
   titleInput: {
     fontSize: 32,
     fontWeight: '800',
-    marginBottom: 24,
+    fontFamily: 'Poppins_800ExtraBold',
+    marginBottom: 16,
     color: '#333',
     marginTop: 8,
   },
+  categoriesContainer: {
+    marginBottom: 24,
+    flexDirection: 'row',
+  },
+  categoryChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  categoryChipSelected: {
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  categoryText: {
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: 'Poppins_600SemiBold',
+  },
   bodyInput: {
     fontSize: 18,
+    fontFamily: 'Poppins_400Regular',
     color: '#444',
     minHeight: 200,
     lineHeight: 28,
@@ -192,6 +258,7 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: 'Poppins_600SemiBold',
     marginLeft: 8,
   },
   imageContainer: {
@@ -231,6 +298,7 @@ const styles = StyleSheet.create({
     color: '#FF3B30',
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: 'Poppins_600SemiBold',
     marginLeft: 8,
   },
 });

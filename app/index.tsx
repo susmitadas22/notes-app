@@ -4,8 +4,15 @@ import { useNotes } from '@/context/NotesContext';
 import { Ionicons } from '@expo/vector-icons';
 import { Link, Stack } from 'expo-router';
 import React from 'react';
-import { FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { LayoutAnimation, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, UIManager, View } from 'react-native';
+import Animated, { Layout } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+if (Platform.OS === 'android') {
+  if (UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+}
 
 export default function HomeScreen() {
   const { notes, isLoading } = useNotes();
@@ -13,6 +20,12 @@ export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [sortOption, setSortOption] = React.useState<'updated_newest' | 'updated_oldest' | 'title_az' | 'title_za'>('updated_newest');
   const [modalVisible, setModalVisible] = React.useState(false);
+  const [isGridLayout, setIsGridLayout] = React.useState(false);
+
+  const toggleLayout = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsGridLayout(!isGridLayout);
+  };
 
   const filteredAndSortedNotes = React.useMemo(() => {
     let result = [...notes];
@@ -23,12 +36,17 @@ export default function HomeScreen() {
       result = result.filter(
         (note) =>
           note.title.toLowerCase().includes(query) ||
-          note.body.toLowerCase().includes(query)
+          note.body.toLowerCase().includes(query) ||
+          (note.category && note.category.toLowerCase().includes(query))
       );
     }
 
     // Sort
     result.sort((a, b) => {
+      // Pinned notes always come first
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+
       switch (sortOption) {
         case 'updated_newest':
           return b.updatedAt - a.updatedAt;
@@ -60,9 +78,14 @@ export default function HomeScreen() {
       
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Notes</Text>
-        <TouchableOpacity onPress={signOut} style={styles.signOutButton}>
-          <Ionicons name="log-out-outline" size={24} color="#333" />
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity onPress={toggleLayout} style={styles.iconButton}>
+            <Ionicons name={isGridLayout ? "list" : "grid"} size={24} color="#333" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={signOut} style={styles.signOutButton}>
+            <Ionicons name="log-out-outline" size={24} color="#333" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.searchContainer}>
@@ -93,12 +116,20 @@ export default function HomeScreen() {
           </Text>
         </View>
       ) : (
-        <FlatList
+        <Animated.FlatList
+          key={isGridLayout ? 'grid' : 'list'}
           data={filteredAndSortedNotes}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <NoteListItem note={item} />}
+          renderItem={({ item }) => (
+            <View style={isGridLayout ? styles.gridItem : styles.listItem}>
+              <NoteListItem note={item} layout={isGridLayout ? 'grid' : 'list'} />
+            </View>
+          )}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          numColumns={isGridLayout ? 2 : 1}
+          columnWrapperStyle={isGridLayout ? styles.columnWrapper : undefined}
+          itemLayoutAnimation={Layout.springify()}
         />
       )}
 
@@ -185,7 +216,18 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 32,
     fontWeight: '800',
+    fontFamily: 'Poppins_800ExtraBold',
     color: '#333',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  iconButton: {
+    padding: 8,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 12,
   },
   signOutButton: {
     padding: 8,
@@ -213,6 +255,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
+    fontFamily: 'Poppins_400Regular',
     color: '#333',
     height: '100%',
   },
@@ -228,6 +271,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 100,
   },
+  listItem: {
+    marginBottom: 0,
+  },
+  gridItem: {
+    flex: 1,
+    maxWidth: '48%',
+  },
+  columnWrapper: {
+    justifyContent: 'space-between',
+  },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
@@ -235,6 +288,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
+    fontFamily: 'Poppins_400Regular',
     color: '#666',
   },
   fab: {
@@ -274,6 +328,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
+    fontFamily: 'Poppins_700Bold',
     color: '#333',
   },
   sortOption: {
@@ -291,10 +346,12 @@ const styles = StyleSheet.create({
   },
   sortOptionText: {
     fontSize: 16,
+    fontFamily: 'Poppins_400Regular',
     color: '#333',
   },
   sortOptionTextSelected: {
     fontWeight: '600',
+    fontFamily: 'Poppins_600SemiBold',
     color: '#007AFF',
   },
 });

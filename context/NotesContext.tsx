@@ -7,6 +7,8 @@ export interface Note {
   title: string;
   body: string;
   imageUri?: string;
+  category?: string;
+  isPinned?: boolean;
   createdAt: number;
   updatedAt: number;
 }
@@ -14,8 +16,8 @@ export interface Note {
 interface NotesContextType {
   notes: Note[];
   isLoading: boolean;
-  addNote: (title: string, body: string, imageUri?: string) => Promise<void>;
-  updateNote: (id: string, title: string, body: string, imageUri?: string) => Promise<void>;
+  addNote: (title: string, body: string, imageUri?: string, category?: string) => Promise<void>;
+  updateNote: (id: string, title: string, body: string, imageUri?: string, category?: string, isPinned?: boolean) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
   refreshNotes: () => Promise<void>;
 }
@@ -71,13 +73,15 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const addNote = async (title: string, body: string, imageUri?: string) => {
-    console.log('Adding note:', title, body, imageUri);
+  const addNote = async (title: string, body: string, imageUri?: string, category: string = 'Personal') => {
+    console.log('Adding note:', title, body, imageUri, category);
     const newNote: Note = {
       id: `${user}-${Date.now()}`,
       title,
       body,
       imageUri,
+      category,
+      isPinned: false,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
@@ -85,10 +89,18 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
     await saveNotes(newNotes);
   };
 
-  const updateNote = async (id: string, title: string, body: string, imageUri?: string) => {
+  const updateNote = async (id: string, title: string, body: string, imageUri?: string, category?: string, isPinned?: boolean) => {
     const newNotes = notes.map((note) =>
       note.id === id
-        ? { ...note, title, body, imageUri, updatedAt: Date.now() }
+        ? { 
+            ...note, 
+            title, 
+            body, 
+            imageUri, 
+            category: category ?? note.category,
+            isPinned: isPinned ?? note.isPinned,
+            updatedAt: Date.now() 
+          }
         : note
     );
     await saveNotes(newNotes);
