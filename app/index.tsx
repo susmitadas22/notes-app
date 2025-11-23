@@ -4,12 +4,47 @@ import { useNotes } from '@/context/NotesContext';
 import { Ionicons } from '@expo/vector-icons';
 import { Link, Stack } from 'expo-router';
 import React from 'react';
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const { notes, isLoading } = useNotes();
   const { signOut } = useAuth();
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [sortOption, setSortOption] = React.useState<'updated_newest' | 'updated_oldest' | 'title_az' | 'title_za'>('updated_newest');
+  const [modalVisible, setModalVisible] = React.useState(false);
+
+  const filteredAndSortedNotes = React.useMemo(() => {
+    let result = [...notes];
+
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (note) =>
+          note.title.toLowerCase().includes(query) ||
+          note.body.toLowerCase().includes(query)
+      );
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      switch (sortOption) {
+        case 'updated_newest':
+          return b.updatedAt - a.updatedAt;
+        case 'updated_oldest':
+          return a.updatedAt - b.updatedAt;
+        case 'title_az':
+          return a.title.localeCompare(b.title);
+        case 'title_za':
+          return b.title.localeCompare(a.title);
+        default:
+          return 0;
+      }
+    });
+
+    return result;
+  }, [notes, searchQuery, sortOption]);
 
   if (isLoading) {
     return (
@@ -30,13 +65,36 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {notes.length === 0 ? (
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search notes..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor="#999"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={20} color="#666" />
+            </TouchableOpacity>
+          )}
+        </View>
+        <TouchableOpacity style={styles.sortButton} onPress={() => setModalVisible(true)}>
+          <Ionicons name="filter" size={24} color="#333" />
+        </TouchableOpacity>
+      </View>
+
+      {filteredAndSortedNotes.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>No notes yet. Create one!</Text>
+          <Text style={styles.emptyText}>
+            {searchQuery ? 'No notes found matching your search.' : 'No notes yet. Create one!'}
+          </Text>
         </View>
       ) : (
         <FlatList
-          data={notes}
+          data={filteredAndSortedNotes}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <NoteListItem note={item} />}
           contentContainerStyle={styles.listContent}
@@ -49,6 +107,60 @@ export default function HomeScreen() {
           <Ionicons name="add" size={30} color="#fff" />
         </TouchableOpacity>
       </Link>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPress={() => setModalVisible(false)}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Sort By</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            
+            <TouchableOpacity 
+              style={[styles.sortOption, sortOption === 'updated_newest' && styles.sortOptionSelected]}
+              onPress={() => { setSortOption('updated_newest'); setModalVisible(false); }}
+            >
+              <Text style={[styles.sortOptionText, sortOption === 'updated_newest' && styles.sortOptionTextSelected]}>Last Updated (Newest first)</Text>
+              {sortOption === 'updated_newest' && <Ionicons name="checkmark" size={20} color="#007AFF" />}
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.sortOption, sortOption === 'updated_oldest' && styles.sortOptionSelected]}
+              onPress={() => { setSortOption('updated_oldest'); setModalVisible(false); }}
+            >
+              <Text style={[styles.sortOptionText, sortOption === 'updated_oldest' && styles.sortOptionTextSelected]}>Last Updated (Oldest first)</Text>
+              {sortOption === 'updated_oldest' && <Ionicons name="checkmark" size={20} color="#007AFF" />}
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.sortOption, sortOption === 'title_az' && styles.sortOptionSelected]}
+              onPress={() => { setSortOption('title_az'); setModalVisible(false); }}
+            >
+              <Text style={[styles.sortOptionText, sortOption === 'title_az' && styles.sortOptionTextSelected]}>Title (A-Z)</Text>
+              {sortOption === 'title_az' && <Ionicons name="checkmark" size={20} color="#007AFF" />}
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.sortOption, sortOption === 'title_za' && styles.sortOptionSelected]}
+              onPress={() => { setSortOption('title_za'); setModalVisible(false); }}
+            >
+              <Text style={[styles.sortOptionText, sortOption === 'title_za' && styles.sortOptionTextSelected]}>Title (Z-A)</Text>
+              {sortOption === 'title_za' && <Ionicons name="checkmark" size={20} color="#007AFF" />}
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -80,6 +192,38 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     borderRadius: 12,
   },
+  searchContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+    gap: 12,
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 48,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+    height: '100%',
+  },
+  sortButton: {
+    width: 48,
+    height: 48,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   listContent: {
     paddingHorizontal: 20,
     paddingBottom: 100,
@@ -108,5 +252,49 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  sortOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  sortOptionSelected: {
+    backgroundColor: '#f0f9ff',
+    marginHorizontal: -24,
+    paddingHorizontal: 24,
+  },
+  sortOptionText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  sortOptionTextSelected: {
+    fontWeight: '600',
+    color: '#007AFF',
   },
 });
