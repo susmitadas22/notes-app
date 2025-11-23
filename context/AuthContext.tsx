@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       await AsyncStorage.setItem('session', username);
       setUser(username);
-      router.replace('/(tabs)');
+      router.replace('/');
     } catch (error) {
       console.error('Sign in error:', error);
       throw error;

@@ -46,7 +46,7 @@ export default function HomeScreen() {
 
       <Link href="/note/new" asChild>
         <TouchableOpacity style={styles.fab}>
-          <Ionicons name="add" size={30} color="#333" />
+          <Ionicons name="add" size={30} color="#fff" />
         </TouchableOpacity>
       </Link>
     </SafeAreaView>
@@ -56,7 +56,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF9C4', // Light yellow background
+    backgroundColor: '#fff', // Neutral white background
   },
   center: {
     flex: 1,
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   },
   signOutButton: {
     padding: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    backgroundColor: '#f0f0f0',
     borderRadius: 12,
   },
   listContent: {
@@ -95,16 +95,16 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 100, // Adjusted for tab bar
+    bottom: 32,
     right: 24,
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#FBC02D', // Darker yellow accent
+    backgroundColor: '#007AFF', // Blue accent
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,
-    shadowColor: '#FBC02D',
+    shadowColor: '#007AFF',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,

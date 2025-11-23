@@ -10,7 +10,7 @@ import { NotesProvider } from '@/context/NotesContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export const unstable_settings = {
-  anchor: '(tabs)',
+  anchor: 'index',
 };
 
 function RootLayoutNav() {
@@ -29,7 +29,7 @@ function RootLayoutNav() {
       router.replace('/sign-in');
     } else if (user && inAuthGroup) {
       // Redirect away from the sign-in page.
-      router.replace('/(tabs)');
+      router.replace('/');
     }
   }, [user, segments, isLoading, router]);
 
@@ -44,7 +44,7 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         <Stack.Screen name="sign-in" options={{ headerShown: false }} />
         <Stack.Screen name="sign-up" options={{ headerShown: false }} />

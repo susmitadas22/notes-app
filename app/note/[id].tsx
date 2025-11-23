@@ -4,6 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function NoteDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -78,29 +79,30 @@ export default function NoteDetailScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Stack.Screen 
-        options={{ 
-          title: isNew ? 'New Note' : 'Edit Note',
-          headerRight: () => (
-            <TouchableOpacity onPress={handleSave}>
-              <Text style={styles.saveButton}>Save</Text>
-            </TouchableOpacity>
-          ),
-        }} 
-      />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <Stack.Screen options={{ headerShown: false }} />
       
-      <ScrollView style={styles.content}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={handleSave}>
+          <Text style={styles.saveButton}>Save</Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <TextInput
           style={styles.titleInput}
           placeholder="Title"
+          placeholderTextColor="#999"
           value={title}
           onChangeText={setTitle}
           maxLength={100}
         />
 
         <TouchableOpacity onPress={pickImage} style={styles.imageButton}>
-          <Ionicons name="image-outline" size={24} color="#007AFF" />
+          <Ionicons name="image-outline" size={24} color="#F57C00" />
           <Text style={styles.imageButtonText}>
             {imageUri ? 'Change Image' : 'Add Image'}
           </Text>
@@ -121,6 +123,7 @@ export default function NoteDetailScreen() {
         <TextInput
           style={styles.bodyInput}
           placeholder="Start typing..."
+          placeholderTextColor="#999"
           value={body}
           onChangeText={setBody}
           multiline
@@ -134,72 +137,95 @@ export default function NoteDetailScreen() {
           </TouchableOpacity>
         )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#fff', // Neutral white background
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  backButton: {
+    padding: 8,
+    marginLeft: -8,
   },
   content: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 24,
   },
   saveButton: {
     fontSize: 17,
-    color: '#007AFF',
-    fontWeight: '600',
+    color: '#007AFF', // Blue accent
+    fontWeight: '700',
   },
   titleInput: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#000',
+    fontSize: 32,
+    fontWeight: '800',
+    marginBottom: 24,
+    color: '#333',
+    marginTop: 8,
   },
   bodyInput: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 18,
+    color: '#444',
     minHeight: 200,
-    lineHeight: 24,
+    lineHeight: 28,
   },
   imageButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 24,
+    backgroundColor: '#f0f0f0',
+    padding: 12,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
   },
   imageButtonText: {
     color: '#007AFF',
     fontSize: 16,
+    fontWeight: '600',
     marginLeft: 8,
   },
   imageContainer: {
-    marginBottom: 16,
+    marginBottom: 24,
     position: 'relative',
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
   image: {
     width: '100%',
-    height: 200,
-    borderRadius: 12,
+    height: 240,
     backgroundColor: '#f0f0f0',
   },
   removeImage: {
     position: 'absolute',
-    top: 8,
-    right: 8,
+    top: 12,
+    right: 12,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 12,
+    borderRadius: 16,
   },
   deleteButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 32,
-    marginBottom: 32,
-    padding: 12,
+    marginBottom: 100,
+    padding: 16,
     backgroundColor: '#FFF0F0',
-    borderRadius: 8,
+    borderRadius: 16,
   },
   deleteText: {
     color: '#FF3B30',
